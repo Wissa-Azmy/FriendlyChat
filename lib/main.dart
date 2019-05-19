@@ -20,11 +20,13 @@ class ChatScreen extends StatefulWidget {
   State<StatefulWidget> createState() => ChatScreenState();
 }
 
+
 // The vsync prevents animations that are offscreen from consuming unnecessary resources.
 // To use your ChatScreenState as the vsync include a TickerProviderStateMixin mixin
 class ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
   final _textFieldController = TextEditingController();
   final _messages = <ChatMessage>[];
+  bool _isComposing = false;
 
   _handleSubmission(String text){
     _textFieldController.clear();
@@ -34,6 +36,7 @@ class ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
 
     setState(() {
       _messages.insert(0, message);
+      _isComposing = false;
     });
 
     message.animationController.forward();
@@ -49,6 +52,11 @@ class ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
             Flexible(
               child: TextField(
                 controller: _textFieldController,
+                onChanged: (String text) { // Enable the send button if only text field is not empty
+                  setState(() {
+                    _isComposing = text.length > 0;
+                  });
+                },
                 onSubmitted: _handleSubmission,
                 decoration: InputDecoration.collapsed(hintText: "Send a message!"),
               ),
@@ -57,7 +65,8 @@ class ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
               margin: EdgeInsets.symmetric(horizontal: 4.0),
               child: IconButton(
                   icon: Icon(Icons.send),
-                  onPressed: () => _handleSubmission(_textFieldController.text)
+                  // Enable the send button if only text field is not empty
+                  onPressed: _isComposing ? () => _handleSubmission(_textFieldController.text) : null,
               ),
             )
           ],
@@ -114,6 +123,7 @@ class ChatMessage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // TODO: implement build
+    // SizeTransition provides an animation effect where the width or height of its child is multiplied by a given size factor value.
     return SizeTransition(
       sizeFactor: CurvedAnimation(parent: animationController, curve: Curves.easeOut),
       axisAlignment: 0.0,
@@ -126,15 +136,17 @@ class ChatMessage extends StatelessWidget {
               margin: EdgeInsets.only(right: 16.0),
               child: CircleAvatar(child: Text(_name[0]),), // Show the first char of the name
             ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Text(_name, style: Theme.of(context).textTheme.subhead),
-                Container(
-                  margin: EdgeInsets.only(top: 5.0),
-                  child: Text(text),
-                )
-              ],
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(_name, style: Theme.of(context).textTheme.subhead),
+                  Container(
+                    margin: EdgeInsets.only(top: 5.0),
+                    child: Text(text),
+                  )
+                ],
+              ),
             )
           ],
         ),
