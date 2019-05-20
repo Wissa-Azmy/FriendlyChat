@@ -1,12 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';  // Contains the defaultTargetPlatform  Top-level property
+import 'package:flutter/cupertino.dart';  // iOS Specific components
 
 void main() => runApp(FriendlyChat());
 
 class FriendlyChat extends StatelessWidget {
+  final iOSTheme = ThemeData(
+    primaryColor: Colors.orange,
+    primarySwatch: Colors.grey,
+    primaryColorBrightness: Brightness.light,
+  );
+
+  final androidTheme = ThemeData(
+    primarySwatch: Colors.purple,
+    accentColor: Colors.orangeAccent[400],
+  );
+
   @override
   Widget build(BuildContext context) {
     // TODO: implement build
     return MaterialApp(
+      theme: defaultTargetPlatform == TargetPlatform.iOS ? iOSTheme : androidTheme,
       title: "Friendly Chat",
       home: ChatScreen()
     );
@@ -62,13 +76,17 @@ class ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
               ),
             ),
             Container(
-              margin: EdgeInsets.symmetric(horizontal: 4.0),
-              child: IconButton(
+                margin: EdgeInsets.symmetric(horizontal: 4.0),
+                child: Theme.of(context).platform == TargetPlatform.iOS
+                ? CupertinoButton(
+                  child: Text("Send"),
+                  onPressed: _isComposing ? () =>  _handleSubmission(_textFieldController.text) : null,
+                )
+                : IconButton(
                   icon: Icon(Icons.send),
-                  // Enable the send button if only text field is not empty
-                  onPressed: _isComposing ? () => _handleSubmission(_textFieldController.text) : null,
-              ),
-            )
+                  onPressed: _isComposing ? () =>  _handleSubmission(_textFieldController.text) : null,
+                )
+            ),
           ],
         ),
       ),
@@ -81,23 +99,32 @@ class ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
     return Scaffold(
       appBar: AppBar(
         title: Text("Friendly Chat"),
+        elevation: defaultTargetPlatform == TargetPlatform.iOS ? 0.0 : 4.0,
       ),
-      body: Column(
-        children: <Widget>[
-          Flexible(
-            child: ListView.builder(
-              itemBuilder: (_, index) => _messages[index],
-              itemCount: _messages.length,
-              reverse: true, //to make the ListView start from the bottom of the screen
-              padding: EdgeInsets.all(8.0),
+      body: Container(
+        child: Column(
+          children: <Widget>[
+            Flexible(
+              child: ListView.builder(
+                itemBuilder: (_, index) => _messages[index],
+                itemCount: _messages.length,
+                reverse: true, //to make the ListView start from the bottom of the screen
+                padding: EdgeInsets.all(8.0),
+              ),
             ),
-          ),
-          Divider(height: 1.0,),
-          Container(
-            decoration: BoxDecoration(color: Theme.of(context).cardColor),
-            child: _buildTextFieldComposer(),
-          )
-        ],
+            Divider(height: 1.0,),
+            Container(
+              decoration: BoxDecoration(color: Theme.of(context).cardColor),
+              child: _buildTextFieldComposer(),
+            ),
+
+          ],
+        ),
+        // This border will help visually distinguish the app bar from the body of the app on iOS.
+        decoration: Theme.of(context).platform == TargetPlatform.iOS
+        ? BoxDecoration(
+          border: Border(top: BorderSide(color: Colors.grey[200]),),
+        ) : null ,
       )
     );
   }
